@@ -115,6 +115,10 @@ class AuthDB:
             con.close()
 
 
+    def logout(self):
+        self._key = None
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         self.db = AuthDB(self)
@@ -130,6 +134,11 @@ class MainWindow(QMainWindow):
 
         self.loginButton.clicked.connect(self.log_in)
         self.registerButton.clicked.connect(self.reg)
+        self.profileButton.clicked.connect(self.profile)
+        self.addPasswordButton.clicked.connect(self.show_add_entry)
+        self.logoutButton.clicked.connect(self.show_logout_confirmation)
+        self.confirmLogoutYesButton.clicked.connect(self.confirm_logout)
+        self.confirmLogoutNoButton.clicked.connect(self.cancel_logout)
 
     def show_error(self, text):
         QMessageBox.warning(self, 'Ошибка', text)
@@ -204,6 +213,39 @@ class MainWindow(QMainWindow):
         self.registerPasswordEdit.setText('')
         self.registerConfirmEdit.setText('')
 
+    def profile(self):
+        self.profileStackedWidget.setCurrentWidget(self.profileDetailsPage)
+        self.profilePage.show()
+        geometry = self.profilePage.frameGeometry()
+        geometry.moveCenter(self.frameGeometry().center())
+        self.profilePage.move(geometry.topLeft())
+        self.profilePage.raise_()
+        self.profilePage.activateWindow()
+
+    def show_add_entry(self):
+        self.addEntryDialog.show()
+        geometry = self.addEntryDialog.frameGeometry()
+        geometry.moveCenter(self.frameGeometry().center())
+        self.addEntryDialog.move(geometry.topLeft())
+        self.addEntryDialog.raise_()
+        self.addEntryDialog.activateWindow()
+        self.entryUrlEdit.setFocus()
+
+    def show_logout_confirmation(self):
+        self.profileStackedWidget.setCurrentWidget(self.logoutConfirmPage)
+        self.confirmLogoutNoButton.setFocus()
+
+    def cancel_logout(self):
+        self.profileStackedWidget.setCurrentWidget(self.profileDetailsPage)
+        self.logoutButton.setFocus()
+
+    def confirm_logout(self):
+        self.db.logout()
+        self.profilePage.hide()
+        self.profileStackedWidget.setCurrentWidget(self.profileDetailsPage)
+        self.profileNameValueLabel.clear()
+        self._clear_log_areas()
+        self.open_log_page()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
