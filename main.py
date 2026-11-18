@@ -2,7 +2,7 @@ import sys
 import sqlite3
 
 from PyQt6 import uic
-from PyQt6.QtCore import QTimer
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
     QMainWindow,
     QApplication,
@@ -52,6 +52,13 @@ class MainWindow(QMainWindow):
         self.entryShowPasswordCheck.toggled.connect(
             lambda checked: self._show_password(checked, (self.entryPasswordEdit,))
         )
+        self.detailsShowPasswordCheck.toggled.connect(
+            lambda checked: self._show_password(checked, (self.detailsPasswordEdit,))
+        )
+        self.passwordsTable.cellClicked.connect(self.open_entry)
+        self.closeEntryDetailsButton.clicked.connect(self.entryDetailsDialog.close)
+        self.copyPasswordButton.clicked.connect(self.copy_password)
+        self.entryDetailsDialog.finished.connect(self._clear_entry_details)
         for link in (self.registerLink, self.loginLink):
             link.setOpenExternalLinks(False)
             link.linkActivated.connect(self._open_page)
@@ -64,6 +71,8 @@ class MainWindow(QMainWindow):
         self.confirmLogoutYesButton.clicked.connect(self.confirm_logout)
         self.confirmLogoutNoButton.clicked.connect(self.cancel_logout)
         self.confirmEntryButton.clicked.connect(self.confirm_entry)
+
+        self.passwordsTable.setSortingEnabled(True)
 
     def confirm_entry(self):
         """Слот, отвечающий за подтверждение добавления новой записи"""
@@ -78,10 +87,32 @@ class MainWindow(QMainWindow):
             self.show_error('Введите пароль')
         else:
             self.db.add_entry(url, login, password)
-            self._show_message('Пароль успешно добавлен!')
+            self.show_information('Пароль успешно добавлен!')
             self._clear_entry_dialog()
             self.addEntryDialog.hide()
             self.update_table()
+
+    def set_message_color(self, 
+                          background,
+                          text='#1D6E54',
+                          border='#B9DDC8'):
+        self.messageLabel.setStyleSheet(f"""
+            QLabel#messageLabel {{
+                background-color: {background};
+                color: {text};
+                border: 1px solid {border};
+                border-radius: 8px;
+                padding: 10px;
+                padding-right: 40px;
+            }}
+        """)
+
+    def show_information(self, text: str):
+        """отображает информацию пользователю(все, кроме ошибок)"""
+        self.set_message_color(background='#E5F3EB',
+                                text='#1D6E54',
+                                border='#B9DDC8')
+        self._show_message(text)
 
     def _show_message(self, text: str, duration: int=5000):
         """Показывает плашку в левом углу экрана с сообщением"""
@@ -90,6 +121,7 @@ class MainWindow(QMainWindow):
         self.messageLabel.show()
         self.messageLabel.raise_()
         self.message_timer.start(duration)
+
 
     def _position_message(self):
         """Показывает плашку"""
@@ -110,7 +142,11 @@ class MainWindow(QMainWindow):
 
     def show_error(self, text: str):
         """Показывает ошибку"""
-        QMessageBox.warning(self, 'Ошибка', text)
+        self.set_message_color(background='#FDECEC',
+                                text='#B71C1C',
+                                border='#EF9A9A')
+        self._show_message(text)
+
 
     def log_in(self):
         """Слот, отвечающий за отправку в БД запроса о правильности логина и пароля при входе"""
@@ -124,7 +160,7 @@ class MainWindow(QMainWindow):
             self.show_error('Введите пароль')
         elif self.db.log_in(login.lower().strip(), password.strip()):
             self.open_main_page()
-            self._show_message('Успешный вход')
+            self.show_information('Успешный вход')
         else:
             self.show_error('Неверный логин или пароль')
 
@@ -139,7 +175,7 @@ class MainWindow(QMainWindow):
                 self.show_error('Введите пароль')
             elif self.db.reg(login.lower().strip(), password):
                 self.open_log_page()
-                self._show_message('Успешно! Теперь войдите в аккаунт')
+                self.show_information('Успешно! Теперь войдите в аккаунт')
         else:
             self.show_error('Пароли не совпадают')
 
@@ -190,10 +226,48 @@ class MainWindow(QMainWindow):
         data = self.db.show_table_entries()
         self.passwordsTable.clearContents()
         self.passwordsTable.setRowCount(0)
-        for i, row in enumerate(data):
+        for i, (entry_id, url, login) in enumerate(data):
             self.passwordsTable.setRowCount(self.passwordsTable.rowCount() + 1)
-            for j, item in enumerate(row):
-                self.passwordsTable.setItem(i, j, QTableWidgetItem(item))
+            for j, value in enumerate((url, login)):
+                item = QTableWidgetItem(value)
+                item.setData(Qt.ItemDataRole.UserRole, entry_id)
+                self.passwordsTable.setItem(i, j, item)
+
+    def open_entry(self, row: int, column: int):
+        """Открывает выбранную запись для просмотра."""
+        item = self.passwordsTable.item(row, column)
+        if item is None:
+            return
+        entry = self.db.get_entry(item.data(Qt.ItemDataRole.UserRole))
+        if entry is None:
+            self.entryDetailsDialog.close()
+            self.show_error('Запись недоступна')
+            return
+        self._clear_entry_details()
+        url, login, password = entry
+        self.detailsUrlEdit.setText(url)
+        self.detailsLoginEdit.setText(login)
+        self.detailsPasswordEdit.setText(password)
+        for field in (self.detailsUrlEdit, self.detailsLoginEdit, self.detailsPasswordEdit):
+            field.setCursorPosition(0)
+        self.entryDetailsDialog.show()
+        geometry = self.entryDetailsDialog.frameGeometry()
+        geometry.moveCenter(self.frameGeometry().center())
+        self.entryDetailsDialog.move(geometry.topLeft())
+        self.entryDetailsDialog.raise_()
+        self.entryDetailsDialog.activateWindow()
+
+    def copy_password(self):
+        """Копирует пароль открытой записи в буфер обмена."""
+        QApplication.clipboard().setText(self.detailsPasswordEdit.text())
+        self.show_information('Пароль скопирован')
+
+    def _clear_entry_details(self):
+        """Скрывает пароль и очищает поля просмотра записи."""
+        self.detailsShowPasswordCheck.setChecked(False)
+        self.detailsUrlEdit.clear()
+        self.detailsLoginEdit.clear()
+        self.detailsPasswordEdit.clear()
 
     def _clear_log_areas(self):
         """Очищает поля на странице входа"""
@@ -247,13 +321,16 @@ class MainWindow(QMainWindow):
 
     def confirm_logout(self):
         """Слот, отвечающий за подтвержение выхода из аккаунта"""
+        self.entryDetailsDialog.close()
+        self._clear_entry_details()
+        self.passwordsTable.setRowCount(0)
         self.db._logout()
         self.profilePage.hide()
         self.profileStackedWidget.setCurrentWidget(self.profileDetailsPage)
         self.profileNameValueLabel.clear()
         self._clear_log_areas()
         self.open_log_page()
-        self._show_message('Вы вышли из аккаунта')
+        self.show_information('Вы вышли из аккаунта')
 
 
 class AuthDB:
@@ -294,6 +371,7 @@ class AuthDB:
         cursor = con.cursor()
         row = cursor.execute("""SELECT * FROM users WHERE login = ?""", (login, )).fetchone()
         if row is None or row[2] is None:
+            con.close()
             return False
         else:
             stored_hash = row[2]
@@ -315,8 +393,10 @@ class AuthDB:
                     dklen=32)
                 self._login = row[1]
                 self._user_id = row[0]
+                con.close()
                 return True
             else:
+                con.close()
                 return False
 
     def reg(self, login: str, password: str) -> bool:
@@ -367,20 +447,49 @@ class AuthDB:
         nonce = secrets.token_bytes(12)
         cipherpassword = AESGCM(self._key).encrypt(nonce, password.encode("utf-8"), AAD)
         cipherlogin = AESGCM(self._key).encrypt(nonce, login.encode("utf-8"), AAD)
-        cursor.execute("""INSERT INTO entries VALUES (?, ?, ?, ?, ?)""", (self._user_id, url, cipherlogin, cipherpassword, nonce))
-        conn.commit()
-        conn.close()
+        try:
+            cursor.execute("""INSERT INTO entries VALUES (?, ?, ?, ?, ?)""", (self._user_id, url, cipherlogin, cipherpassword, nonce))
+        finally:
+            conn.commit()
+            conn.close()
 
     def show_table_entries(self) -> list:
-        """Возвращает все имеющие записи пользователя"""
+        """Возвращает идентификатор, ссылку и логин записей пользователя."""
         conn = sqlite3.connect('database.sqlite3')
-        cursor = conn.cursor()
-        cipher_user_data = cursor.execute("""SELECT * FROM entries WHERE user_id = ?""", (self._user_id, )).fetchall()
+        try:
+            cipher_user_data = conn.execute(
+                'SELECT rowid, url, login, nonce FROM entries WHERE user_id = ? ORDER BY rowid',
+                (self._user_id,)
+            ).fetchall()
+        finally:
+            conn.close()
         plain_user_data = []
-        for _, url, login, _, nonce in cipher_user_data:
+        for entry_id, url, login, nonce in cipher_user_data:
             plainlogin = AESGCM(self._key).decrypt(nonce, login, AAD).decode('utf-8')
-            plain_user_data.append((url, plainlogin))
+            plain_user_data.append((entry_id, url, plainlogin))
         return plain_user_data
+
+    def get_entry(self, entry_id: int):
+        """Возвращает расшифрованную запись текущего пользователя."""
+        if self._user_id is None or self._key is None:
+            return None
+        conn = sqlite3.connect('database.sqlite3')
+        try:
+            row = conn.execute(
+                'SELECT url, login, password, nonce FROM entries WHERE rowid = ? AND user_id = ?',
+                (entry_id, self._user_id)
+            ).fetchone()
+        finally:
+            conn.close()
+        if row is None:
+            return None
+        url, login, password, nonce = row
+        cipher = AESGCM(self._key)
+        return (
+            url,
+            cipher.decrypt(nonce, login, AAD).decode('utf-8'),
+            cipher.decrypt(nonce, password, AAD).decode('utf-8')
+        )
 
 
 if __name__ == "__main__":

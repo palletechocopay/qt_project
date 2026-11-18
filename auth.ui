@@ -408,11 +408,11 @@ QLabel#logoutConfirmLabel { font-size: 22px; font-weight: 600; color: #173D2E; }
 
 /* Entry dialog */
 /* Profile */
-QWidget#addEntryDialog {
+QWidget#addEntryDialog, QWidget#entryDetailsDialog {
     background: #EDF3EF;
     border: none;
 }
-QFrame#addEntryCard {
+QFrame#addEntryCard, QFrame#entryDetailsCard {
     background: #FFFFFF;
     border: 1px solid #DBE5DF;
     border-radius: 20px;
@@ -424,14 +424,27 @@ QLabel#addEntryBrandMark {
     font-size: 23px;
     font-weight: 600;
 }
-QLabel#addEntryBrandName {
+QLabel#addEntryBrandName, QLabel#entryDetailsTitle {
     font-size: 21px;
     font-weight: 600;
     color: #183F30;
 }
 QLabel#entryUrlLabel, QLabel#entryLoginLabel, QLabel#entryPasswordLabel { font-size: 13px; font-weight: 600; color: #3D5147; }
+QLabel#detailsUrlLabel, QLabel#detailsLoginLabel, QLabel#detailsPasswordLabel { font-size: 13px; font-weight: 600; color: #3D5147; }
+QToolButton#copyPasswordButton {
+    background: #E5F3EB;
+    border: 1px solid #B9DDC8;
+    border-radius: 8px;
+    padding: 0;
+}
+QToolButton#copyPasswordButton:hover {
+    background: #D0E8DA;
+}
+QToolButton#copyPasswordButton:focus {
+    border: 2px solid #8CC7AD;
+}
 
-QPushButton#confirmEntryButton {
+QPushButton#confirmEntryButton, QPushButton#closeEntryDetailsButton {
     background: #1D6E54;
     color: #FFFFFF;
     border: 2px solid #1D6E54;
@@ -440,15 +453,15 @@ QPushButton#confirmEntryButton {
     font-weight: 600;
     padding: 0 12px;
 }
-QPushButton#confirmEntryButton:hover {
+QPushButton#confirmEntryButton:hover, QPushButton#closeEntryDetailsButton:hover {
     background: #185D46;
     border-color: #185D46;
 }
-QPushButton#confirmEntryButton:pressed {
+QPushButton#confirmEntryButton:pressed, QPushButton#closeEntryDetailsButton:pressed {
     background: #124A38;
     border-color: #124A38;
 }
-QPushButton#confirmEntryButton:focus {
+QPushButton#confirmEntryButton:focus, QPushButton#closeEntryDetailsButton:focus {
     border-color: #8CC7AD;
 }
 </string>
@@ -2718,6 +2731,234 @@ QPushButton#messageCloseButton:focus {
      </item>
     </layout>
    </widget>
+   <widget class="QDialog" name="entryDetailsDialog">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>540</width>
+      <height>420</height>
+     </rect>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>460</width>
+      <height>380</height>
+     </size>
+    </property>
+    <property name="visible">
+     <bool>false</bool>
+    </property>
+    <property name="windowTitle">
+     <string>Просмотр записи</string>
+    </property>
+    <layout class="QVBoxLayout" name="entryDetailsLayout">
+     <property name="sizeConstraint">
+      <enum>QLayout::SetMinimumSize</enum>
+     </property>
+     <property name="spacing">
+      <number>20</number>
+     </property>
+     <property name="leftMargin">
+      <number>20</number>
+     </property>
+     <property name="topMargin">
+      <number>20</number>
+     </property>
+     <property name="rightMargin">
+      <number>20</number>
+     </property>
+     <property name="bottomMargin">
+      <number>20</number>
+     </property>
+     <item>
+      <widget class="QLabel" name="entryDetailsTitle">
+       <property name="text">
+        <string>Просмотр записи</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QFrame" name="entryDetailsCard">
+       <property name="frameShape">
+        <enum>QFrame::NoFrame</enum>
+       </property>
+       <layout class="QFormLayout" name="entryDetailsFormLayout">
+        <property name="fieldGrowthPolicy">
+         <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+        </property>
+        <property name="labelAlignment">
+         <set>Qt::AlignLeft|Qt::AlignVCenter</set>
+        </property>
+        <property name="horizontalSpacing">
+         <number>16</number>
+        </property>
+        <property name="verticalSpacing">
+         <number>16</number>
+        </property>
+        <property name="leftMargin">
+         <number>24</number>
+        </property>
+        <property name="topMargin">
+         <number>24</number>
+        </property>
+        <property name="rightMargin">
+         <number>24</number>
+        </property>
+        <property name="bottomMargin">
+         <number>24</number>
+        </property>
+        <item row="0" column="0">
+         <widget class="QLabel" name="detailsUrlLabel">
+          <property name="text">
+           <string>Ссылка</string>
+          </property>
+          <property name="buddy">
+           <cstring>detailsUrlEdit</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLineEdit" name="detailsUrlEdit">
+          <property name="minimumSize">
+           <size>
+            <width>180</width>
+            <height>46</height>
+           </size>
+          </property>
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="detailsLoginLabel">
+          <property name="text">
+           <string>Логин</string>
+          </property>
+          <property name="buddy">
+           <cstring>detailsLoginEdit</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QLineEdit" name="detailsLoginEdit">
+          <property name="minimumSize">
+           <size>
+            <width>180</width>
+            <height>46</height>
+           </size>
+          </property>
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="detailsPasswordLabel">
+          <property name="text">
+           <string>Пароль</string>
+          </property>
+          <property name="buddy">
+           <cstring>detailsPasswordEdit</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <layout class="QHBoxLayout" name="detailsPasswordLayout" stretch="1,0">
+          <property name="spacing">
+           <number>8</number>
+          </property>
+          <item alignment="Qt::AlignVCenter">
+           <widget class="QLineEdit" name="detailsPasswordEdit">
+            <property name="minimumSize">
+             <size>
+              <width>180</width>
+              <height>46</height>
+             </size>
+            </property>
+            <property name="echoMode">
+             <enum>QLineEdit::Password</enum>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item alignment="Qt::AlignVCenter">
+           <widget class="QToolButton" name="copyPasswordButton">
+            <property name="minimumSize">
+             <size>
+              <width>36</width>
+              <height>36</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>36</width>
+              <height>36</height>
+             </size>
+            </property>
+            <property name="cursor">
+             <cursorShape>PointingHandCursor</cursorShape>
+            </property>
+            <property name="toolTip">
+             <string>Скопировать пароль</string>
+            </property>
+            <property name="accessibleName">
+             <string>Скопировать пароль</string>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normaloff>icons/copy.svg</normaloff>icons/copy.svg</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>20</width>
+              <height>20</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="3" column="0" colspan="2">
+         <widget class="QCheckBox" name="detailsShowPasswordCheck">
+          <property name="cursor">
+           <cursorShape>PointingHandCursor</cursorShape>
+          </property>
+          <property name="text">
+           <string>Показать пароль</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0" colspan="2">
+         <widget class="QPushButton" name="closeEntryDetailsButton">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>47</height>
+           </size>
+          </property>
+          <property name="cursor">
+           <cursorShape>PointingHandCursor</cursorShape>
+          </property>
+          <property name="text">
+           <string>Закрыть</string>
+          </property>
+          <property name="autoDefault">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+    </layout>
+   </widget>
    <widget class="QDialog" name="addEntryDialog">
     <property name="geometry">
      <rect>
@@ -3010,6 +3251,12 @@ QPushButton#messageCloseButton:focus {
   <tabstop>entryShowPasswordCheck</tabstop>
   <tabstop>confirmEntryButton</tabstop>
   <tabstop>messageCloseButton</tabstop>
+  <tabstop>detailsUrlEdit</tabstop>
+  <tabstop>detailsLoginEdit</tabstop>
+  <tabstop>detailsPasswordEdit</tabstop>
+  <tabstop>copyPasswordButton</tabstop>
+  <tabstop>detailsShowPasswordCheck</tabstop>
+  <tabstop>closeEntryDetailsButton</tabstop>
  </tabstops>
  <resources/>
  <connections/>
