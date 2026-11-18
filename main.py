@@ -1,9 +1,8 @@
 import sys
 import sqlite3
-import json
 
 from PyQt6 import uic
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import (
     QMainWindow,
     QApplication,
@@ -11,7 +10,6 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QTableWidgetItem
 )
-from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 import hashlib
@@ -383,10 +381,6 @@ class AuthDB:
             plainlogin = AESGCM(self._key).decrypt(nonce, login, AAD).decode('utf-8')
             plain_user_data.append((url, plainlogin))
         return plain_user_data
-
-
-#добавить генерацию nonce, исправить таблицу entries (+nonce), исправить update_table()
-
 
 
 if __name__ == "__main__":
